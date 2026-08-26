@@ -1,0 +1,64 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  background-color: #030100;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#canvas-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: grab;
+}
+
+#canvas-container:active {
+  cursor: grabbing;
+}
+
+/* 90s Retro CRT vignette & scanline effect */
+.crt-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  background: 
+    radial-gradient(circle at center, transparent 55%, rgba(5, 1, 0, 0.9) 100%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+}
+
+/* Retro HUD Control Instructions */
+.hud-hint {
+  position: absolute;
+  bottom: 24px;
+  width: 100%;
+  text-align: center;
+  color: #ff6600;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(255, 102, 0, 0.7);
+  pointer-events: none;
+  z-index: 11;
+  opacity: 0.85;
+}
