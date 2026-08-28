@@ -3,17 +3,22 @@ const BOARD_TILES = 10;        // 10x10 chessboard
 const TILE_SIZE = 1.6;
 const BOARD_SIZE = BOARD_TILES * TILE_SIZE;
 const HALF_BOARD = BOARD_SIZE / 2;
-const BALL_RADIUS = 0.24;
-const GRID_STEP = 0.54;
+
+// Half-sized balls & tighter grid step for dense, high-res dot matrix
+const BALL_RADIUS = 0.12;
+const GRID_STEP = 0.28;
 
 // --- THREE.JS SETUP ---
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x040100);
-scene.fog = new THREE.FogExp2(0x040100, 0.022);
+
+// Deep rich obsidian background
+const BG_COLOR = 0x080608;
+scene.background = new THREE.Color(BG_COLOR);
+scene.fog = new THREE.FogExp2(BG_COLOR, 0.018);
 
 const aspect = window.innerWidth / window.innerHeight;
-const frustumSize = 11;
+const frustumSize = 10.5;
 const camera = new THREE.OrthographicCamera(
   -frustumSize * aspect,
   frustumSize * aspect,
@@ -30,13 +35,13 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
-// --- LIGHTING (Warm Retro Specular & Orange Edge Reflections) ---
-const ambientLight = new THREE.AmbientLight(0x3a2015, 2.2);
+// --- LIGHTING ---
+const ambientLight = new THREE.AmbientLight(0x2a1a14, 2.4);
 scene.add(ambientLight);
 
-// Primary key light for sharp highlights on glossy black & white tiles
-const dirLight = new THREE.DirectionalLight(0xfff2d4, 2.4);
-dirLight.position.set(16, 28, 16);
+// Primary key light for glossy reflections
+const dirLight = new THREE.DirectionalLight(0xfff0d6, 2.6);
+dirLight.position.set(16, 30, 16);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
@@ -47,12 +52,12 @@ dirLight.shadow.camera.bottom = -HALF_BOARD - 3;
 dirLight.shadow.bias = -0.0005;
 scene.add(dirLight);
 
-// Vibrant orange rim light to preserve the retro arcade aesthetic
-const rimLight = new THREE.PointLight(0xff5500, 5.0, 45);
-rimLight.position.set(-14, 14, -14);
+// Neon orange rim and underglow lights
+const rimLight = new THREE.PointLight(0xff5500, 4.5, 40);
+rimLight.position.set(-12, 14, -12);
 scene.add(rimLight);
 
-const bottomGlow = new THREE.PointLight(0xff3300, 2.2, 30);
+const bottomGlow = new THREE.PointLight(0xff3700, 2.5, 30);
 bottomGlow.position.set(0, -4, 0);
 scene.add(bottomGlow);
 
@@ -61,15 +66,15 @@ const boardGroup = new THREE.Group();
 scene.add(boardGroup);
 
 const matWhiteTile = new THREE.MeshStandardMaterial({
-  color: 0xf5f5f7,
+  color: 0xf2f2f5,
   roughness: 0.12,
-  metalness: 0.1,
+  metalness: 0.08,
 });
 
 const matBlackTile = new THREE.MeshStandardMaterial({
-  color: 0x111114,
+  color: 0x121216,
   roughness: 0.15,
-  metalness: 0.2,
+  metalness: 0.25,
 });
 
 const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.4, TILE_SIZE * 0.98);
@@ -86,10 +91,10 @@ for (let i = 0; i < BOARD_TILES; i++) {
   }
 }
 
-// Thick Wooden/Obsidian Base
+// Thick Obsidian Base
 const baseGeo = new THREE.BoxGeometry(BOARD_SIZE + 0.8, 0.8, BOARD_SIZE + 0.8);
 const baseMat = new THREE.MeshStandardMaterial({
-  color: 0x090503,
+  color: 0x080608,
   roughness: 0.35,
   metalness: 0.3
 });
@@ -109,42 +114,52 @@ const boardBorder = new THREE.Mesh(borderGeo, borderMat);
 boardBorder.position.set(0, -0.15, 0);
 boardGroup.add(boardBorder);
 
-// --- "PEMMYZ" 5x3 / 5x5 BITMAP DOT MATRICES ---
+// --- HIGH-DENSITY 7x5 BITMAP MATRICES FOR "PEMMYZ" ---
 const FONT_MAP = {
   P: [
-    [1, 1, 1],
-    [1, 0, 1],
-    [1, 1, 1],
-    [1, 0, 0],
-    [1, 0, 0]
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0]
   ],
   E: [
-    [1, 1, 1],
-    [1, 0, 0],
-    [1, 1, 1],
-    [1, 0, 0],
-    [1, 1, 1]
+    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0],
+    [1, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1]
   ],
   M: [
     [1, 0, 0, 0, 1],
     [1, 1, 0, 1, 1],
     [1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1],
     [1, 0, 0, 0, 1],
     [1, 0, 0, 0, 1]
   ],
   Y: [
-    [1, 0, 1],
-    [1, 0, 1],
-    [0, 1, 0],
-    [0, 1, 0],
-    [0, 1, 0]
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [0, 1, 0, 1, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0]
   ],
   Z: [
-    [1, 1, 1],
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 0],
-    [1, 1, 1]
+    [1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 1, 0],
+    [0, 0, 1, 0, 0],
+    [0, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1]
   ]
 };
 
@@ -161,13 +176,14 @@ const letterLayouts = WORD.split('').map((char) => {
   totalWordWidth += width + letterGap;
   return layout;
 });
-totalWordWidth -= letterGap; // Remove trailing gap
+totalWordWidth -= letterGap;
 
-// Center the word around (0, 0)
 const wordOffsetX = -totalWordWidth / 2;
+// Offset slightly downwards along Z so text sits nicely in the middle-to-lower portion
+const WORD_Z_OFFSET = 1.6;
 
 // --- SHARED BALL ASSETS & SHADOW TEXTURE ---
-const ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 28, 28);
+const ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 20, 20);
 const shadowGeo = new THREE.PlaneGeometry(BALL_RADIUS * 2.8, BALL_RADIUS * 2.8);
 
 const shadowCanvas = document.createElement('canvas');
@@ -183,8 +199,17 @@ sCtx.fillRect(0, 0, 64, 64);
 
 const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
 
+// Corner coordinate targets for the 4-corner group bounce phase
+const CORNERS = [
+  { x: -5.0, z: -5.0 }, // Top-Left
+  { x:  5.0, z: -5.0 }, // Top-Right
+  { x: -5.0, z:  5.0 }, // Bottom-Left
+  { x:  5.0, z:  5.0 }  // Bottom-Right
+];
+
 // Instantiate target ball coordinates
 const balls = [];
+let ballIndexCounter = 0;
 
 letterLayouts.forEach((letter, letterIdx) => {
   const { matrix, startX } = letter;
@@ -194,13 +219,12 @@ letterLayouts.forEach((letter, letterIdx) => {
     for (let c = 0; c < matrix[r].length; c++) {
       if (matrix[r][c] === 1) {
         const targetX = wordOffsetX + startX + c * GRID_STEP;
-        const targetZ = (r - (rows - 1) / 2) * GRID_STEP;
+        const targetZ = (r - (rows - 1) / 2) * GRID_STEP + WORD_Z_OFFSET;
 
-        // Individual ball material for color wave pulse
         const ballMat = new THREE.MeshStandardMaterial({
           color: 0xff6600,
-          roughness: 0.1,
-          metalness: 0.05,
+          roughness: 0.12,
+          metalness: 0.06,
           emissive: 0x330c00
         });
 
@@ -217,50 +241,59 @@ letterLayouts.forEach((letter, letterIdx) => {
         });
         const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
         shadowMesh.rotation.x = -Math.PI / 2;
-        shadowMesh.position.y = 0.01;
+        shadowMesh.position.y = 0.005;
         scene.add(shadowMesh);
+
+        const currentIdx = ballIndexCounter++;
+        const cornerIdx = currentIdx % 4;
 
         balls.push({
           mesh,
           shadowMesh,
           mat: ballMat,
+          index: currentIdx,
           letterIdx,
           targetX,
           targetZ,
-          x: targetX,
-          z: targetZ,
+          cornerIdx,
+          x: 0,
+          z: 0,
           y: 0,
           vy: 0,
-          gravity: -28,
-          restitution: 0.48,
+          gravity: -26,
+          restitution: 0.46,
           squashTimer: 0,
           dropDelay: 0,
-          settled: false
+          settled: false,
+          // Individual offsets for vortex and corner cluster animations
+          tornadoOffset: (currentIdx / 85) * Math.PI * 6,
+          tornadoHeight: 0.4 + (currentIdx / 85) * 6.5,
+          cornerRadius: 0.4 + (currentIdx % 7) * 0.16,
+          cornerAngleOffset: ((currentIdx * 137.5) * Math.PI) / 180,
+          cornerFreq: 6.0 + (currentIdx % 5) * 0.7
         });
       }
     }
   }
 });
 
-// Reset / Start Bounce Sequence
-function triggerBounceSequence() {
-  balls.forEach((ball) => {
-    // Dynamic sequential drop from left to right ('P' -> 'Z')
-    ball.dropDelay = ball.letterIdx * 0.16 + Math.random() * 0.12;
-    ball.y = 12 + Math.random() * 6.0;
-    ball.vy = -Math.random() * 4.0;
-    ball.x = ball.targetX + (Math.random() - 0.5) * 1.5;
-    ball.z = ball.targetZ + (Math.random() - 0.5) * 1.5;
-    ball.settled = false;
-    ball.squashTimer = 0;
-    ball.mesh.position.set(ball.x, ball.y, ball.z);
-    ball.mat.emissive.setHex(0x330c00);
-  });
-}
+// --- ANIMATION CHOREOGRAPHY PHASES ---
+const PHASE_TORNADO = 0;   // 0.0s -> 2.6s : Swirling tornado vortex
+const PHASE_CORNERS = 1;   // 2.6s -> 5.2s : Split & bounce in 4 corner groups
+const PHASE_ASSEMBLE = 2;  // 5.2s -> End  : Cascading drops & bounce into "PEMMYZ"
 
-triggerBounceSequence();
+const TORNADO_DURATION = 2.6;
+const CORNERS_DURATION = 2.6;
 
-// --- INTERACTIVE TILT, ZOOM & CLICK CONTROLS ---
+let currentPhase = PHASE_TORNADO;
+let phaseTimer = 0;
+
+// --- CAMERA VIEW CONSTANTS & CONTROLS ---
+const ISO_THETA = Math.PI / 4;                      // 45° Isometric angle
+const ISO_PHI = Math.atan(Math.SQRT1_2);            // ~35.26° elevation
+const TOP_DOWN_THETA = 0;                           // Front-facing top-down
+const TOP_DOWN_PHI = Math.PI / 2 - 0.001;           // 90° straight down
+
 const cameraDistance = 34;
 let isDragging = false;
 let pointerDownX = 0;
@@ -268,15 +301,39 @@ let pointerDownY = 0;
 let previousPointerX = 0;
 let previousPointerY = 0;
 
-// Classic isometric camera angle
-let targetTheta = Math.PI / 4;                      // 45° azimuth
-let targetPhi = Math.atan(Math.SQRT1_2);            // ~35.26° elevation
+let targetTheta = ISO_THETA;
+let targetPhi = ISO_PHI;
 let currentTheta = targetTheta;
 let currentPhi = targetPhi;
 
 let targetZoom = 1.0;
 let currentZoom = 1.0;
 
+let autoTopDownTriggered = false;
+let settleTimer = 0;
+
+// Trigger / Replay Full Intro Sequence
+function startIntroChoreography() {
+  currentPhase = PHASE_TORNADO;
+  phaseTimer = 0;
+  autoTopDownTriggered = false;
+  settleTimer = 0;
+
+  targetTheta = ISO_THETA;
+  targetPhi = ISO_PHI;
+  targetZoom = 1.0;
+
+  balls.forEach((ball) => {
+    ball.settled = false;
+    ball.squashTimer = 0;
+    ball.vy = 0;
+    ball.mat.emissive.setHex(0x441100);
+  });
+}
+
+startIntroChoreography();
+
+// --- USER INTERACTION CONTROLS ---
 window.addEventListener('pointerdown', (e) => {
   isDragging = true;
   pointerDownX = e.clientX;
@@ -292,7 +349,7 @@ window.addEventListener('pointermove', (e) => {
 
   targetTheta -= deltaX * 0.007;
   targetPhi += deltaY * 0.007;
-  targetPhi = Math.max(0.18, Math.min(Math.PI / 2 - 0.05, targetPhi));
+  targetPhi = Math.max(0.12, Math.min(Math.PI / 2 - 0.001, targetPhi));
 
   previousPointerX = e.clientX;
   previousPointerY = e.clientY;
@@ -301,9 +358,9 @@ window.addEventListener('pointermove', (e) => {
 window.addEventListener('pointerup', (e) => {
   if (isDragging) {
     const dist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
-    // Click to replay drop sequence
+    // Click to replay full intro choreography
     if (dist < 6) {
-      triggerBounceSequence();
+      startIntroChoreography();
     }
   }
   isDragging = false;
@@ -317,7 +374,7 @@ window.addEventListener('wheel', (e) => {
   targetZoom = Math.max(0.45, Math.min(2.8, targetZoom * zoomFactor));
 }, { passive: false });
 
-// --- ANIMATION LOOP ---
+// --- MAIN ANIMATION LOOP ---
 const clock = new THREE.Clock();
 let totalTime = 0;
 
@@ -326,56 +383,141 @@ function animate() {
 
   const dt = Math.min(clock.getDelta(), 0.1);
   totalTime += dt;
+  phaseTimer += dt;
+
+  // --- PHASE TRANSITIONS ---
+  if (currentPhase === PHASE_TORNADO && phaseTimer >= TORNADO_DURATION) {
+    currentPhase = PHASE_CORNERS;
+    phaseTimer = 0;
+  } else if (currentPhase === PHASE_CORNERS && phaseTimer >= CORNERS_DURATION) {
+    currentPhase = PHASE_ASSEMBLE;
+    phaseTimer = 0;
+
+    // Launch each ball into dropping cascade
+    balls.forEach((ball) => {
+      ball.dropDelay = ball.letterIdx * 0.14 + Math.random() * 0.12;
+      ball.y = 10.0 + Math.random() * 4.5;
+      ball.vy = -Math.random() * 3.0;
+      ball.x = ball.targetX + (Math.random() - 0.5) * 1.5;
+      ball.z = ball.targetZ + (Math.random() - 0.5) * 1.5;
+      ball.settled = false;
+      ball.squashTimer = 0;
+    });
+  }
 
   let allSettled = true;
 
+  // --- BALL PHYSICS & CHOREOGRAPHY UPDATE ---
   balls.forEach((ball) => {
-    // Staggered drop delay
-    if (ball.dropDelay > 0) {
-      ball.dropDelay -= dt;
-      ball.mesh.position.y = 100; // Keep off-screen until drop
-      ball.shadowMesh.material.opacity = 0;
+    // -------------------------------------------------------------
+    // 1. TORNADO VORTEX PHASE
+    // -------------------------------------------------------------
+    if (currentPhase === PHASE_TORNADO) {
       allSettled = false;
-      return;
+      const t = phaseTimer;
+      const swirlSpeed = 5.2;
+      const angle = ball.tornadoOffset + t * swirlSpeed;
+      
+      // Funnel shape expanding with height
+      const currentHeight = ball.tornadoHeight + Math.sin(t * 4.0 + ball.index) * 0.5;
+      const radius = 0.6 + (currentHeight / 7.0) * 3.2;
+
+      const tx = Math.cos(angle) * radius;
+      const tz = Math.sin(angle) * radius;
+      const ty = Math.max(BALL_RADIUS, currentHeight);
+
+      ball.x = THREE.MathUtils.lerp(ball.x, tx, dt * 14);
+      ball.z = THREE.MathUtils.lerp(ball.z, tz, dt * 14);
+      ball.y = THREE.MathUtils.lerp(ball.y, ty, dt * 14);
+
+      const glow = 0.3 + 0.3 * Math.sin(angle * 2.0);
+      ball.mat.emissive.setRGB(glow * 0.9, glow * 0.28, 0.0);
     }
-
-    if (!ball.settled) {
+    // -------------------------------------------------------------
+    // 2. FOUR CORNERS BOUNCING GROUPS PHASE
+    // -------------------------------------------------------------
+    else if (currentPhase === PHASE_CORNERS) {
       allSettled = false;
+      const t = phaseTimer;
+      const corner = CORNERS[ball.cornerIdx];
 
-      // Homing movement towards letter slot X-Z
-      ball.x = THREE.MathUtils.lerp(ball.x, ball.targetX, dt * 10);
-      ball.z = THREE.MathUtils.lerp(ball.z, ball.targetZ, dt * 10);
+      // Orbit inside the assigned corner cluster
+      const cornerOrbitAngle = ball.cornerAngleOffset + t * 4.0;
+      const tx = corner.x + Math.cos(cornerOrbitAngle) * ball.cornerRadius;
+      const tz = corner.z + Math.sin(cornerOrbitAngle) * ball.cornerRadius;
 
-      // Vertical bounce integration
-      ball.vy += ball.gravity * dt;
-      ball.y += ball.vy * dt;
+      // Vigorous rhythmic corner bouncing
+      const bounceVal = Math.abs(Math.sin(t * ball.cornerFreq + ball.index * 0.4));
+      const ty = BALL_RADIUS + bounceVal * 3.2;
 
-      // Ground impact detection
-      if (ball.y <= BALL_RADIUS) {
-        ball.y = BALL_RADIUS;
+      ball.x = THREE.MathUtils.lerp(ball.x, tx, dt * 12);
+      ball.z = THREE.MathUtils.lerp(ball.z, tz, dt * 12);
+      ball.y = THREE.MathUtils.lerp(ball.y, ty, dt * 16);
 
-        if (Math.abs(ball.vy) > 1.8) {
-          // Bounce up with decaying elasticity
-          ball.vy = -ball.vy * ball.restitution;
-          ball.squashTimer = 0.12;
-        } else {
-          // Settle permanently in place
-          ball.vy = 0;
+      // Bounce squash at impact
+      if (bounceVal < 0.08) {
+        ball.squashTimer = 0.08;
+        ball.mat.emissive.setRGB(0.9, 0.35, 0.0);
+      } else {
+        ball.mat.emissive.setRGB(0.3, 0.08, 0.0);
+      }
+    }
+    // -------------------------------------------------------------
+    // 3. ASSEMBLE "PEMMYZ" BOUNCING DROP SEQUENCE
+    // -------------------------------------------------------------
+    else if (currentPhase === PHASE_ASSEMBLE) {
+      if (ball.dropDelay > 0) {
+        ball.dropDelay -= dt;
+        ball.mesh.position.y = 100;
+        ball.shadowMesh.material.opacity = 0;
+        allSettled = false;
+        return;
+      }
+
+      if (!ball.settled) {
+        allSettled = false;
+
+        // Magnetically steer towards target letter slot X-Z
+        ball.x = THREE.MathUtils.lerp(ball.x, ball.targetX, dt * 9.5);
+        ball.z = THREE.MathUtils.lerp(ball.z, ball.targetZ, dt * 9.5);
+
+        // Vertical bounce physics integration
+        ball.vy += ball.gravity * dt;
+        ball.y += ball.vy * dt;
+
+        // Ground collision & bouncing
+        if (ball.y <= BALL_RADIUS) {
           ball.y = BALL_RADIUS;
-          ball.x = ball.targetX;
-          ball.z = ball.targetZ;
-          ball.settled = true;
-          ball.squashTimer = 0.08;
+
+          if (Math.abs(ball.vy) > 1.6) {
+            ball.vy = -ball.vy * ball.restitution;
+            ball.squashTimer = 0.11;
+          } else {
+            ball.vy = 0;
+            ball.y = BALL_RADIUS;
+            ball.x = ball.targetX;
+            ball.z = ball.targetZ;
+            ball.settled = true;
+            ball.squashTimer = 0.08;
+          }
         }
+      }
+
+      // Settled text wave glow pulse
+      if (ball.settled) {
+        const wave = Math.sin(totalTime * 4.0 - ball.x * 0.8);
+        const glow = Math.max(0, wave);
+        ball.mat.emissive.setRGB(0.22 + glow * 0.45, 0.06 + glow * 0.12, 0.0);
       }
     }
 
+    // Apply Position
     ball.mesh.position.set(ball.x, ball.y, ball.z);
 
     // Squash and Stretch
     if (ball.squashTimer > 0) {
       ball.squashTimer -= dt;
-      const progress = 1 - Math.max(0, ball.squashTimer / 0.12);
+      const progress = 1 - Math.max(0, ball.squashTimer / 0.11);
       const squashY = THREE.MathUtils.lerp(0.62, 1.0, progress);
       const squashXZ = THREE.MathUtils.lerp(1.28, 1.0, progress);
       ball.mesh.scale.set(squashXZ, squashY, squashXZ);
@@ -386,23 +528,27 @@ function animate() {
     }
 
     // Dynamic Contact Shadow
-    ball.shadowMesh.position.set(ball.x, 0.01, ball.z);
-    const heightFactor = Math.max(0.0, 1 - (ball.y - BALL_RADIUS) / 6.0);
+    ball.shadowMesh.position.set(ball.x, 0.005, ball.z);
+    const heightFactor = Math.max(0.0, 1 - (ball.y - BALL_RADIUS) / 5.0);
     ball.shadowMesh.scale.set(heightFactor, heightFactor, 1);
     ball.shadowMesh.material.opacity = 0.85 * heightFactor;
-
-    // Glowing wave effect once settled in place
-    if (ball.settled) {
-      const wave = Math.sin(totalTime * 4.0 - ball.x * 0.8);
-      const glow = Math.max(0, wave);
-      ball.mat.emissive.setRGB(0.2 + glow * 0.45, 0.05 + glow * 0.12, 0.0);
-    }
   });
 
-  // Smoothly interpolate Camera Angles & Zoom
-  currentTheta = THREE.MathUtils.lerp(currentTheta, targetTheta, 0.1);
-  currentPhi = THREE.MathUtils.lerp(currentPhi, targetPhi, 0.1);
-  currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, 0.12);
+  // --- AUTOMATIC TOP-DOWN CAMERA TRANSITION ---
+  if (currentPhase === PHASE_ASSEMBLE && allSettled) {
+    settleTimer += dt;
+    if (settleTimer > 0.4 && !autoTopDownTriggered && !isDragging) {
+      autoTopDownTriggered = true;
+      targetTheta = TOP_DOWN_THETA;
+      targetPhi = TOP_DOWN_PHI;
+      targetZoom = 1.08;
+    }
+  }
+
+  // Smooth Camera Interpolation
+  currentTheta = THREE.MathUtils.lerp(currentTheta, targetTheta, dt * 3.5);
+  currentPhi = THREE.MathUtils.lerp(currentPhi, targetPhi, dt * 3.5);
+  currentZoom = THREE.MathUtils.lerp(currentZoom, targetZoom, dt * 3.5);
 
   camera.zoom = currentZoom;
   camera.updateProjectionMatrix();
@@ -426,5 +572,4 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Start loop
 animate();
